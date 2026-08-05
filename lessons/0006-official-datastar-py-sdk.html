@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Lesson 6: Using the Official `datastar-py` SDK with FastAPI</title>
+    <link rel="stylesheet" href="../assets/style.css">
+    <script type="module" src="https://cdn.jsdelivr.net/gh/starfederation/datastar@v1.0.0-beta.7/bundles/datastar.js"></script>
+</head>
+<body>
+
+    <header>
+        <p><a href="../MISSION.md">← Back to Mission</a> | <a href="../reference/official-sdk-reference.html">View SDK Reference</a></p>
+        <h1>Lesson 6: Using the Official `datastar-py` SDK with FastAPI</h1>
+    </header>
+
+    <main>
+        <div class="card">
+            <h2>Objective</h2>
+            <p>
+                Learn how to correctly use the official Python SDK package <code>datastar-py</code> and its FastAPI helper module (`datastar_py.fastapi`) for clean, type-safe SSE responses and signal parsing.
+            </p>
+        </div>
+
+        <div class="card">
+            <h2>The Official `datastar-py` API</h2>
+            <p>
+                Instead of manually constructing raw SSE strings, <code>datastar-py</code> provides:
+            </p>
+            <ul>
+                <li><code>DatastarResponse</code>: Response class designed specifically for FastAPI/Starlette.</li>
+                <li><code>@datastar_response</code>: Decorator that automatically wraps return values (including generators) into <code>DatastarResponse</code>.</li>
+                <li><code>read_signals(request)</code>: Async helper to extract incoming frontend signals.</li>
+                <li><code>ServerSentEventGenerator as SSE</code>: Helper methods like <code>SSE.patch_elements()</code> and <code>SSE.patch_signals()</code>.</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2>Correct FastAPI Implementation with `datastar-py`</h2>
+            <pre><code>from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+from datastar_py import ServerSentEventGenerator as SSE
+from datastar_py.fastapi import DatastarResponse, datastar_response, read_signals
+
+app = FastAPI()
+
+@app.get("/", response_class=HTMLResponse)
+def index():
+    return """
+    &lt;!DOCTYPE html&gt;
+    &lt;html&gt;
+    &lt;head&gt;
+        &lt;script type="module" src="https://cdn.jsdelivr.net/gh/starfederation/datastar@v1.0.0-beta.7/bundles/datastar.js"&gt;&lt;/script&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;div id="counter" data-signals="{count: 0}"&gt;
+            &lt;p&gt;Count: &lt;span data-text="$count"&gt;&lt;/span&gt;&lt;/p&gt;
+            &lt;button data-on-click="@get('/increment')"&gt;Increment&lt;/button&gt;
+        &lt;/div&gt;
+    &lt;/body&gt;
+    &lt;/html&gt;
+    """
+
+@app.get("/increment")
+@datastar_response
+async def increment(request: Request):
+    # Read incoming signals from Datastar request
+    signals = await read_signals(request)
+    current_count = int(signals.get("count", 0)) + 1
+
+    # Return DOM patch using official SSE generator helper
+    html_fragment = f'''
+    &lt;div id="counter" data-signals="{{count: {current_count}}}"&gt;
+        &lt;p&gt;Count: &lt;span data-text="$count"&gt;{current_count}&lt;/span&gt;&lt;/p&gt;
+        &lt;button data-on-click="@get('/increment')"&gt;Increment&lt;/button&gt;
+    &lt;/div&gt;
+    '''
+    return DatastarResponse(SSE.patch_elements(html_fragment))
+</code></pre>
+        </div>
+
+        <div class="card">
+            <h2>Interactive Skill Check</h2>
+            <p><strong>Question:</strong> Which decorator from `datastar_py.fastapi` automatically wraps FastAPI endpoint results into a Datastar SSE response?</p>
+            <ul>
+                <li>A) <code>@sse_route</code></li>
+                <li>B) <code>@datastar_response</code></li>
+                <li>C) <code>@patch_dom</code></li>
+                <li>D) <code>@stream_response</code></li>
+            </ul>
+            <p><em>Answer: B) <code>@datastar_response</code></em></p>
+        </div>
+    </main>
+
+    <footer>
+        <p>Datastar + FastAPI Course | Free Version Edition</p>
+        <p>Ask your teacher (GitHub Copilot) if you have any further questions about the SDK!</p>
+    </footer>
+
+</body>
+</html>

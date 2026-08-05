@@ -29,9 +29,11 @@
         </div>
 
         <div class="card">
-            <h2>FastAPI Live Search Implementation</h2>
-            <pre><code>from fastapi import FastAPI
-from fastapi.responses import HTMLResponse, StreamingResponse
+            <h2>FastAPI Live Search Implementation with `datastar-py`</h2>
+            <pre><code>from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+from datastar_py import ServerSentEventGenerator as SSE
+from datastar_py.fastapi import DatastarResponse, datastar_response, read_signals
 
 app = FastAPI()
 
@@ -66,15 +68,16 @@ def index():
     """
 
 @app.get("/search")
-async def search(query: str = ""):
-    filtered = [item for item in ITEMS if query.lower() in item.lower()]
+@datastar_response
+async def search(request: Request):
+    signals = await read_signals(request)
+    query = signals.get("query", "").lower()
+    
+    filtered = [item for item in ITEMS if query in item.lower()]
     items_li = "".join([f"&lt;li&gt;{item}&lt;/li&gt;" for item in filtered]) if filtered else "&lt;li&gt;No items found&lt;/li&gt;"
     
-    async def event_generator():
-        fragment = f'&lt;div id="results"&gt;&lt;ul&gt;{items_li}&lt;/ul&gt;&lt;/div&gt;'
-        yield f"event: datastar-patch-dom\ndata: fragments {fragment}\n\n"
-
-    return StreamingResponse(event_generator(), media_type="text/event-stream")
+    fragment = f'&lt;div id="results"&gt;&lt;ul&gt;{items_li}&lt;/ul&gt;&lt;/div&gt;'
+    return DatastarResponse(SSE.patch_elements(fragment))
 </code></pre>
         </div>
 

@@ -29,11 +29,12 @@
         </div>
 
         <div class="card">
-            <h2>FastAPI Implementation for Live Input Echo</h2>
-            <p>Here is how a FastAPI backend handles incoming signal data and returns an HTML patch:</p>
+            <h2>FastAPI Implementation for Live Input Echo with `datastar-py`</h2>
+            <p>Here is how a FastAPI backend handles incoming signal data using <code>read_signals</code> and returns an HTML patch via <code>DatastarResponse</code>:</p>
             <pre><code>from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, StreamingResponse
-import json
+from fastapi.responses import HTMLResponse
+from datastar_py import ServerSentEventGenerator as SSE
+from datastar_py.fastapi import DatastarResponse, datastar_response, read_signals
 
 app = FastAPI()
 
@@ -58,12 +59,13 @@ def index():
     """
 
 @app.get("/greet")
-async def greet(name: str = "stranger"):
-    async def event_generator():
-        fragment = f'&lt;div id="greeting"&gt;&lt;p style="color: #0284c7; font-weight: 600;"&gt;Server says: Hello, {name or "stranger"}!&lt;/p&gt;&lt;/div&gt;'
-        yield f"event: datastar-patch-dom\ndata: fragments {fragment}\n\n"
-
-    return StreamingResponse(event_generator(), media_type="text/event-stream")
+@datastar_response
+async def greet(request: Request):
+    signals = await read_signals(request)
+    name = signals.get("name", "stranger")
+    
+    fragment = f'&lt;div id="greeting"&gt;&lt;p style="color: #0284c7; font-weight: 600;"&gt;Server says: Hello, {name or "stranger"}!&lt;/p&gt;&lt;/div&gt;'
+    return DatastarResponse(SSE.patch_elements(fragment))
 </code></pre>
         </div>
 

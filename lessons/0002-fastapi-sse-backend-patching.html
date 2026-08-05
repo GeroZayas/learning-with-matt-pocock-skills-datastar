@@ -22,13 +22,14 @@
         </div>
 
         <div class="card">
-            <h2>FastAPI SSE Endpoint Implementation</h2>
+            <h2>FastAPI SSE Endpoint Implementation with `datastar-py`</h2>
             <p>
-                In Datastar, backend actions make a request (e.g. via <code>data-on-click="@get('/backend-endpoint')"</code>) expecting an SSE stream. Here is how you build that in FastAPI using <code>StreamingResponse</code>:
+                Using the official <code>datastar-py</code> SDK and its FastAPI helpers, streaming Server-Sent Events with <code>datastar-patch-elements</code> is clean and type-safe:
             </p>
             <pre><code>from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, StreamingResponse
-import asyncio
+from fastapi.responses import HTMLResponse
+from datastar_py import ServerSentEventGenerator as SSE
+from datastar_py.fastapi import DatastarResponse, datastar_response
 
 app = FastAPI()
 
@@ -49,26 +50,23 @@ def index():
     """
 
 @app.get("/stream-update")
-async def stream_update():
-    async def event_generator():
-        html_fragment = '&lt;div id="result"&gt;&lt;p style="color: green;"&gt;Successfully updated from FastAPI SSE!&lt;/p&gt;&lt;/div&gt;'
-        # Format according to Datastar SSE specification
-        yield f"event: datastar-patch-dom\ndata: fragments {html_fragment}\n\n"
-
-    return StreamingResponse(event_generator(), media_type="text/event-stream")
+@datastar_response
+async def stream_update(request: Request):
+    html_fragment = '&lt;div id="result"&gt;&lt;p style="color: #0284c7; font-weight: 600;"&gt;Successfully updated using official datastar-py SDK!&lt;/p&gt;&lt;/div&gt;'
+    return DatastarResponse(SSE.patch_elements(html_fragment))
 </code></pre>
         </div>
 
         <div class="card">
             <h2>Interactive Skill Check</h2>
-            <p><strong>Question:</strong> When streaming a DOM patch via SSE to Datastar, what event name does Datastar listen for by default?</p>
+            <p><strong>Question:</strong> When streaming element patches via the official Python SDK, which event type is generated behind the scenes?</p>
             <ul>
                 <li>A) <code>message</code></li>
-                <li>B) <code>datastar-patch-dom</code></li>
+                <li>B) <code>datastar-patch-elements</code></li>
                 <li>C) <code>update-html</code></li>
                 <li>D) <code>dom-swap</code></li>
             </ul>
-            <p><em>Answer: B) <code>datastar-patch-dom</code></em></p>
+            <p><em>Answer: B) <code>datastar-patch-elements</code></em></p>
         </div>
     </main>
 

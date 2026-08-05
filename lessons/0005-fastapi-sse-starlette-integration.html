@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Lesson 5: Using FastAPI & SSE Starlette Correctly with Datastar</title>
+    <link rel="stylesheet" href="../assets/style.css">
+    <script type="module" src="https://cdn.jsdelivr.net/gh/starfederation/datastar@v1.0.0-beta.7/bundles/datastar.js"></script>
+</head>
+<body>
+
+    <header>
+        <p><a href="../MISSION.md">← Back to Mission</a> | <a href="../reference/fastapi-sdk-reference.html">View SDK Reference</a></p>
+        <h1>Lesson 5: Using FastAPI & SSE Starlette Correctly with Datastar</h1>
+    </header>
+
+    <main>
+        <div class="card">
+            <h2>Objective</h2>
+            <p>
+                Ensure our FastAPI backend correctly formats Server-Sent Events (SSE) using industry-standard libraries like <code>sse-starlette</code>, ensuring robust event streaming and clean Datastar signal parsing.
+            </p>
+        </div>
+
+        <div class="card">
+            <h2>Why `sse-starlette`?</h2>
+            <p>
+                While raw <code>StreamingResponse</code> works, <code>sse-starlette</code> is the standard production-grade library for FastAPI and Starlette that handles client disconnects, keep-alive heartbeats, and event formatting natively.
+            </p>
+        </div>
+
+        <div class="card">
+            <h2>Production-Ready FastAPI + Datastar Example</h2>
+            <pre><code>from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+from sse_starlette.sse import EventSourceResponse
+
+app = FastAPI()
+
+@app.get("/", response_class=HTMLResponse)
+def index():
+    return """
+    &lt;!DOCTYPE html&gt;
+    &lt;html&gt;
+    &lt;head&gt;
+        &lt;script type="module" src="https://cdn.jsdelivr.net/gh/starfederation/datastar@v1.0.0-beta.7/bundles/datastar.js"&gt;&lt;/script&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;div id="counter" data-signals="{count: 0}"&gt;
+            &lt;p&gt;Count: &lt;span data-text="$count"&gt;&lt;/span&gt;&lt;/p&gt;
+            &lt;button data-on-click="@get('/increment')"&gt;Increment&lt;/button&gt;
+        &lt;/div&gt;
+    &lt;/body&gt;
+    &lt;/html&gt;
+    """
+
+@app.get("/increment")
+async def increment(request: Request):
+    # Datastar automatically sends signals as query params on GET requests
+    # Extract query params or handle state here
+    
+    async def event_generator():
+        # HTML fragment to patch back into the DOM
+        html_fragment = '&lt;div id="counter" data-signals="{count: 1}"&gt;&lt;p&gt;Count: &lt;span data-text="$count"&gt;1&lt;/span&gt;&lt;/p&gt;&lt;button data-on-click="@get(\'/increment\')"&gt;Increment&lt;/button&gt;&lt;/div&gt;'
+        
+        yield {
+            "event": "datastar-patch-dom",
+            "data": f"fragments {html_fragment}"
+        }
+
+    return EventSourceResponse(event_generator())
+</code></pre>
+        </div>
+
+        <div class="card">
+            <h2>Interactive Skill Check</h2>
+            <p><strong>Question:</strong> What library is widely recommended in the FastAPI ecosystem for robust Server-Sent Event handling and client disconnect management?</p>
+            <ul>
+                <li>A) <code>fastapi-websockets</code></li>
+                <li>B) <code>sse-starlette</code></li>
+                <li>C) <code>async-sse-client</code></li>
+                <li>D) <code>starlette-streams</code></li>
+            </ul>
+            <p><em>Answer: B) <code>sse-starlette</code></em></p>
+        </div>
+    </main>
+
+    <footer>
+        <p>Datastar + FastAPI Course | Free Version Edition</p>
+        <p>Ask your teacher (GitHub Copilot) if you have any questions about SDK patterns or deployment!</p>
+    </footer>
+
+</body>
+</html>
