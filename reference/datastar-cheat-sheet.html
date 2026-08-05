@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Reference: Datastar Core Attributes & SSE Protocol</title>
+    <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+    <header>
+        <p><a href="../MISSION.md">← Back to Mission</a> | <a href="../lessons/0001-datastar-core-concepts-and-fastapi.html">Lesson 1</a></p>
+        <h1>Reference: Datastar Core Attributes & SSE Protocol</h1>
+    </header>
+
+    <main>
+        <div class="card">
+            <h2>Core Attributes Cheat Sheet (Open Source)</h2>
+            <ul>
+                <li><code>data-signals="{key: value}"</code>: Initializes reactive state variables in the DOM element tree.</li>
+                <li><code>data-text="$variable"</code>: Binds text content reactively to a signal.</li>
+                <li><code>data-on-click="expression"</code>: Executes expressions or actions on click events.</li>
+                <li><code>data-bind-inputName</code>: Two-way data binding for input elements (inputs, checkboxes, selects).</li>
+                <li><code>data-on-input__debounce.300ms="..."</code>: Event modifiers like debounce for efficient server requests.</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2>Server-Sent Events (SSE) Protocol for Datastar</h2>
+            <p>Datastar uses standard SSE with custom event types or data formats to merge fragments into the DOM:</p>
+            <pre><code>event: datastar-patch-dom
+data: fragments &lt;div id="target"&gt;Updated HTML&lt;/div&gt;
+data: selector #target
+data: merge morph
+</code></pre>
+        </div>
+    </main>
+
+    <footer>
+        <p>Datastar + FastAPI Course | Free Version Edition</p>
+    </footer>
+
+</body>
+</html>

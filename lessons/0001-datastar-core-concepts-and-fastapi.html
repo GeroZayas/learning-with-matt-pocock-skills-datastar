@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Lesson 1: Datastar Core Concepts & FastAPI Setup</title>
+    <!-- Include shared stylesheet component -->
+    <link rel="stylesheet" href="../assets/style.css">
+    <!-- Datastar CDN (Open Source Core) -->
+    <script type="module" src="https://cdn.jsdelivr.net/gh/starfederation/datastar@v1.0.0-beta.7/bundles/datastar.js"></script>
+</head>
+<body>
+
+    <header>
+        <p><a href="../MISSION.md">← Back to Mission</a></p>
+        <h1>Lesson 1: Datastar Core Concepts & FastAPI Setup</h1>
+    </header>
+
+    <main>
+        <div class="card">
+            <h2>Introduction to Datastar & FastAPI</h2>
+            <p>
+                <strong>Datastar</strong> is a hypermedia-driven framework that brings reactive frontend behavior to server-rendered web applications using attributes like <code>data-signals</code> and <code>data-on</code>, communicating via Server-Sent Events (SSE).
+            </p>
+            <p>
+                <strong>FastAPI</strong> is an async Python web framework that makes streaming Server-Sent Events effortless using <code>StreamingResponse</code>.
+            </p>
+            <p>
+                In this first lesson, we will explore the mental model of Datastar (Signals, Actions, and Backend Patches) and wire up a minimal FastAPI endpoint.
+            </p>
+        </div>
+
+        <div class="card">
+            <h2>Primary Source Recommendation</h2>
+            <p>
+                Read the official <a href="https://data-star.dev/guide/getting_started" target="_blank">Datastar Getting Started Guide</a> to understand how attributes are parsed and how SSE backend requests work in the open-source release.
+            </p>
+        </div>
+
+        <div class="card">
+            <h2>Minimal FastAPI + Datastar Example</h2>
+            <p>Here is how you set up a basic FastAPI backend that returns HTML fragments for Datastar:</p>
+            <pre><code>from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
+
+app = FastAPI()
+
+@app.get("/", response_class=HTMLResponse)
+def index():
+    return """
+    &lt;!DOCTYPE html&gt;
+    &lt;html&gt;
+    &lt;head&gt;
+        &lt;script type="module" src="https://cdn.jsdelivr.net/gh/starfederation/datastar@v1.0.0-beta.7/bundles/datastar.js"&gt;&lt;/script&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;div id="counter" data-signals="{count: 0}"&gt;
+            &lt;p&gt;Count: &lt;span data-text="$count"&gt;&lt;/span&gt;&lt;/p&gt;
+            &lt;button data-on-click="$count++"&gt;Increment&lt;/button&gt;
+        &lt;/div&gt;
+    &lt;/body&gt;
+    &lt;/html&gt;
+    """
+</code></pre>
+        </div>
+
+        <div class="card">
+            <h2>Quick Check (Quiz)</h2>
+            <p><strong>Question:</strong> What protocol does Datastar use to stream DOM updates and signal patches from the backend?</p>
+            <ul>
+                <li>A) WebSockets</li>
+                <li>B) Server-Sent Events (SSE)</li>
+                <li>C) Long Polling</li>
+                <li>D) gRPC</li>
+            </ul>
+            <p><em>Answer: B) Server-Sent Events (SSE)</em></p>
+        </div>
+    </main>
+
+    <footer>
+        <p>Datastar + FastAPI Course | Free Version Edition</p>
+        <p>If anything is unclear, ask your teacher (GitHub Copilot) for clarification or guidance!</p>
+    </footer>
+
+</body>
+</html>

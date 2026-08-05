@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Lesson 2: Server-Sent Events & FastAPI Backend Patching</title>
+    <link rel="stylesheet" href="../assets/style.css">
+    <script type="module" src="https://cdn.jsdelivr.net/gh/starfederation/datastar@v1.0.0-beta.7/bundles/datastar.js"></script>
+</head>
+<body>
+
+    <header>
+        <p><a href="../MISSION.md">← Back to Mission</a> | <a href="../reference/datastar-cheat-sheet.html">View Reference</a></p>
+        <h1>Lesson 2: Server-Sent Events & FastAPI Backend Patching</h1>
+    </header>
+
+    <main>
+        <div class="card">
+            <h2>Objective</h2>
+            <p>
+                Learn how FastAPI can stream Server-Sent Events (SSE) to Datastar, enabling server-driven DOM patches without writing custom client-side JavaScript.
+            </p>
+        </div>
+
+        <div class="card">
+            <h2>FastAPI SSE Endpoint Implementation</h2>
+            <p>
+                In Datastar, backend actions make a request (e.g. via <code>data-on-click="@get('/backend-endpoint')"</code>) expecting an SSE stream. Here is how you build that in FastAPI using <code>StreamingResponse</code>:
+            </p>
+            <pre><code>from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse, StreamingResponse
+import asyncio
+
+app = FastAPI()
+
+@app.get("/", response_class=HTMLResponse)
+def index():
+    return """
+    &lt;!DOCTYPE html&gt;
+    &lt;html&gt;
+    &lt;head&gt;
+        &lt;script type="module" src="https://cdn.jsdelivr.net/gh/starfederation/datastar@v1.0.0-beta.7/bundles/datastar.js"&gt;&lt;/script&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;div id="result"&gt;
+            &lt;button data-on-click="@get('/stream-update')"&gt;Fetch Server Update&lt;/button&gt;
+        &lt;/div&gt;
+    &lt;/body&gt;
+    &lt;/html&gt;
+    """
+
+@app.get("/stream-update")
+async def stream_update():
+    async def event_generator():
+        html_fragment = '&lt;div id="result"&gt;&lt;p style="color: green;"&gt;Successfully updated from FastAPI SSE!&lt;/p&gt;&lt;/div&gt;'
+        # Format according to Datastar SSE specification
+        yield f"event: datastar-patch-dom\ndata: fragments {html_fragment}\n\n"
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
+</code></pre>
+        </div>
+
+        <div class="card">
+            <h2>Interactive Skill Check</h2>
+            <p><strong>Question:</strong> When streaming a DOM patch via SSE to Datastar, what event name does Datastar listen for by default?</p>
+            <ul>
+                <li>A) <code>message</code></li>
+                <li>B) <code>datastar-patch-dom</code></li>
+                <li>C) <code>update-html</code></li>
+                <li>D) <code>dom-swap</code></li>
+            </ul>
+            <p><em>Answer: B) <code>datastar-patch-dom</code></em></p>
+        </div>
+    </main>
+
+    <footer>
+        <p>Datastar + FastAPI Course | Free Version Edition</p>
+        <p>Ask your teacher (GitHub Copilot) if you have any questions or want to test a real FastAPI example!</p>
+    </footer>
+
+</body>
+</html>

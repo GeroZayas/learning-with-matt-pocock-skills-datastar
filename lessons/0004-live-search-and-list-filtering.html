@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Lesson 4: Live Search & List Filtering with FastAPI</title>
+    <link rel="stylesheet" href="../assets/style.css">
+    <script type="module" src="https://cdn.jsdelivr.net/gh/starfederation/datastar@v1.0.0-beta.7/bundles/datastar.js"></script>
+</head>
+<body>
+
+    <header>
+        <p><a href="../MISSION.md">← Back to Mission</a> | <a href="../reference/datastar-cheat-sheet.html">View Reference</a></p>
+        <h1>Lesson 4: Live Search & List Filtering with FastAPI</h1>
+    </header>
+
+    <main>
+        <div class="card">
+            <h2>Objective</h2>
+            <p>
+                Combine signal binding, debounced input events, and server-side filtering to build a real-time live search list using Datastar and FastAPI.
+            </p>
+        </div>
+
+        <div class="card">
+            <h2>The Pattern</h2>
+            <p>
+                When a user types into a search box, Datastar updates the <code>query</code> signal and fires a debounced GET request to FastAPI. FastAPI filters an in-memory or database list and streams back the updated HTML fragment for the results list.
+            </p>
+        </div>
+
+        <div class="card">
+            <h2>FastAPI Live Search Implementation</h2>
+            <pre><code>from fastapi import FastAPI
+from fastapi.responses import HTMLResponse, StreamingResponse
+
+app = FastAPI()
+
+ITEMS = [
+    "Datastar Framework",
+    "FastAPI Python",
+    "Server-Sent Events",
+    "Tailwind CSS",
+    "Hypermedia Systems",
+    "Python AsyncIO"
+]
+
+@app.get("/", response_class=HTMLResponse)
+def index():
+    items_li = "".join([f"&lt;li&gt;{item}&lt;/li&gt;" for item in ITEMS])
+    return f"""
+    &lt;!DOCTYPE html&gt;
+    &lt;html&gt;
+    &lt;head&gt;
+        &lt;script type="module" src="https://cdn.jsdelivr.net/gh/starfederation/datastar@v1.0.0-beta.7/bundles/datastar.js"&gt;&lt;/script&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;div data-signals="{{query: ''}}"&gt;
+            &lt;input type="text" data-bind-query placeholder="Search items..." 
+                   data-on-input__debounce.200ms="@get('/search')" /&gt;
+            &lt;div id="results"&gt;
+                &lt;ul&gt;{items_li}&lt;/ul&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+    &lt;/body&gt;
+    &lt;/html&gt;
+    """
+
+@app.get("/search")
+async def search(query: str = ""):
+    filtered = [item for item in ITEMS if query.lower() in item.lower()]
+    items_li = "".join([f"&lt;li&gt;{item}&lt;/li&gt;" for item in filtered]) if filtered else "&lt;li&gt;No items found&lt;/li&gt;"
+    
+    async def event_generator():
+        fragment = f'&lt;div id="results"&gt;&lt;ul&gt;{items_li}&lt;/ul&gt;&lt;/div&gt;'
+        yield f"event: datastar-patch-dom\ndata: fragments {fragment}\n\n"
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
+</code></pre>
+        </div>
+
+        <div class="card">
+            <h2>Interactive Skill Check</h2>
+            <p><strong>Question:</strong> In this live search pattern, where does the filtering logic execute?</p>
+            <ul>
+                <li>A) Strictly in client-side JavaScript</li>
+                <li>B) On the FastAPI backend server</li>
+                <li>C) Inside the browser CSS engine</li>
+                <li>D) Inside Datastar core extension</li>
+            </ul>
+            <p><em>Answer: B) On the FastAPI backend server</em></p>
+        </div>
+    </main>
+
+    <footer>
+        <p>Datastar + FastAPI Course | Free Version Edition</p>
+        <p>Ask your teacher (GitHub Copilot) if you have any questions or want to build a complete CRUD app!</p>
+    </footer>
+
+</body>
+</html>
