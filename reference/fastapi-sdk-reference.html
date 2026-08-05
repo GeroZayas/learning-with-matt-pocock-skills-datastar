@@ -1,0 +1,48 @@
+# Reference: Official Datastar Python SDK & FastAPI Integration
+
+- **Repository / Package:** `starfederation/datastar` (Python helper package or direct SSE formatting)
+- **Official Specification:** Datastar SSE format expects event types (`datastar-patch-dom`, `datastar-patch-signals`) and standard data lines (`fragments ...`, `selector ...`, `merge ...`).
+
+## Using the Official Python Datastar SDK (`star-federation` / `datastar-py`)
+
+Datastar provides Python helper utilities (or you can use structured SSE helpers) to construct server responses cleanly without manual string formatting.
+
+### Example with FastAPI and Datastar Py / SSE Helpers:
+```python
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+from sse_starlette.sse import EventSourceResponse
+
+app = FastAPI()
+
+@app.get("/", response_class=HTMLResponse)
+def index():
+    return """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <script type="module" src="https://cdn.jsdelivr.net/gh/starfederation/datastar@v1.0.0-beta.7/bundles/datastar.js"></script>
+    </head>
+    <body>
+        <div id="counter" data-signals="{count: 0}">
+            <p>Count: <span data-text="$count"></span></p>
+            <button data-on-click="@get('/increment')">Increment</button>
+        </div>
+    </body>
+    </html>
+    """
+
+@app.get("/increment")
+async def increment(request: Request):
+    # Extract signals sent by Datastar (Datastar sends signals as query params on GET or json body on POST)
+    # Datastar Py SDK or manual SSE generator:
+    async def event_generator():
+        # Example fragment patch
+        fragment = '<div id="counter" data-signals="{count: 1}"><p>Count: <span data-text="$count">1</span></p><button data-on-click="@get(\'/increment\')">Increment</button></div>'
+        yield {
+            "event": "datastar-patch-dom",
+            "data": f"fragments {fragment}"
+        }
+
+    return EventSourceResponse(event_generator())
+```

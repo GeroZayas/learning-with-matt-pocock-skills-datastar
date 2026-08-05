@@ -1,0 +1,57 @@
+# Reference: Official Datastar Python SDK (`datastar-py` & FastAPI)
+
+- **PyPI Package:** `datastar-py`
+- **Official Repo:** [starfederation/datastar-python](https://github.com/starfederation/datastar-python)
+
+## Official FastAPI Integration Pattern
+
+The official `datastar-py` package provides framework-specific response classes and decorators for FastAPI:
+- `datastar_py.fastapi.DatastarResponse`
+- `datastar_py.fastapi.datastar_response` (decorator)
+- `datastar_py.fastapi.read_signals` (signal extraction)
+- `datastar_py.ServerSentEventGenerator as SSE`
+
+### Example Implementation with FastAPI:
+
+```python
+import asyncio
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+from datastar_py import ServerSentEventGenerator as SSE
+from datastar_py.fastapi import DatastarResponse, datastar_response, read_signals
+
+app = FastAPI()
+
+@app.get("/", response_class=HTMLResponse)
+def index():
+    return """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <script type="module" src="https://cdn.jsdelivr.net/gh/starfederation/datastar@v1.0.0-beta.7/bundles/datastar.js"></script>
+    </head>
+    <body>
+        <div id="counter" data-signals="{count: 0}">
+            <p>Count: <span data-text="$count"></span></p>
+            <button data-on-click="@get('/increment')">Increment</button>
+        </div>
+    </body>
+    </html>
+    """
+
+@app.get("/increment")
+@datastar_response
+async def increment(request: Request):
+    # Read signals sent by Datastar frontend
+    signals = await read_signals(request)
+    current_count = int(signals.get("count", 0)) + 1
+
+    # Return DatastarResponse using SSE helper
+    html_fragment = f'''
+    <div id="counter" data-signals="{{count: {current_count}}}">
+        <p>Count: <span data-text="$count">{current_count}</span></p>
+        <button data-on-click="@get('/increment')">Increment</button>
+    </div>
+    '''
+    return DatastarResponse(SSE.patch_elements(html_fragment))
+```
